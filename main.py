@@ -23,7 +23,7 @@ def txt(message):
 
 @bot.message_handler(commands=['connection'])
 def connection(message):
-    bot.send_message(message.chat.id, 'Если что-то не так обращайтесь к разработчикам @Raa_is @daniil170301')
+    bot.send_message(message.chat.id, 'Если что-то не так обращайтесь к разработчикам @Raa_is @El1Tiburon')
 
 
 @bot.message_handler(commands=['start'])
