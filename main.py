@@ -101,7 +101,9 @@ def send_gender(message):
     elif message.content_type == 'text':
         us.city = message.text
     else:
-        print('//тут надо обратно отправить')
+        message.text = us.age
+        send_city(message)
+        return
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     men = types.KeyboardButton('Я парень')
     fem = types.KeyboardButton('Я девушка')
@@ -115,6 +117,7 @@ def send_gender(message):
 def send_target(message):
     if (message.text != 'Я парень') and (message.text != 'Я девушка') and (message.text != 'Я вертолет'):
         bot.send_message(message.from_user.id, 'Нужно ввести что-то из предложенного')
+        message.text = ''
         send_gender(message)
         return
     us.gender = message.text
@@ -131,6 +134,7 @@ def send_target(message):
 def send_search_target(message):
     if (message.text != 'Общение') and (message.text != 'Найти пару') and (message.text != 'Быстрые знакомства'):
         bot.send_message(message.from_user.id, 'Нужно ввести что-то из предложенного')
+        message.text = us.gender
         send_target(message)
         return
     us.target = message.text
@@ -146,6 +150,11 @@ def send_search_target(message):
 
 
 def send_photo(message):
+    if (message.text != 'Парни') and (message.text != 'Девушки') and (message.text != 'Вертолеты') and (message.text != 'Всё равно'):
+        bot.send_message(message.from_user.id, 'Нужно ввести что-то из предложенного')
+        message.text = us.target
+        send_search_target(message)
+        return
     markup = types.ReplyKeyboardRemove(selective=False)
     msg = bot.send_message(message.from_user.id, 'Отправьте своё фото \n <i>Пожалуйста отправляйте свою фотографию</i>',
                            parse_mode='html', reply_markup=markup)
@@ -160,6 +169,7 @@ def send_description(message):
         us.photo_id = message.photo[2].file_id
         us.file_unique_id = message.photo[2].file_unique_id
     else:
+        message.text = us.search_gender
         send_photo(message)
         return
     # TODO сделать так, чтобы если у человека была анкета, то ему предлагали оставить предыдущее
@@ -170,12 +180,16 @@ def send_description(message):
 def last_process(message):
     # Тут надо записывать данные
     us.description = message.text
+    if message.chat.username is None:
+        bot.send_message(message.chat.id,'Вам в найтроках телеграма необдоходимо указать свой username, а после снова '
+                                         'воспользоваться в боте комадой /start')
+        return
     cursor.execute(
         "INSERT INTO users (NAME,GENDER,age,city,search_gender,photo_id,"
-        "hobbies,target,description,ms_id,latitude,longitude,file_unique_id) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);",
+        "hobbies,target,description,ms_id,latitude,longitude,file_unique_id,us_url) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s);",
         (us.name, us.gender, us.age, us.city, us.search_gender, us.photo_id, us.hobbies,
-         us.target, us.description, message.chat.id, us.latitude, us.longitude, us.file_unique_id))
+         us.target, us.description, message.chat.id, us.latitude, us.longitude, us.file_unique_id, message.chat.username))
     connection_bd.commit()
     markup = types.ReplyKeyboardRemove(selective=False)
     bot.send_message(message.chat.id, "Окей \n Вы успешно зарегистрированы.", reply_markup=markup)
