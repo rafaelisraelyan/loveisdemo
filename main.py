@@ -49,7 +49,11 @@ def hello(message):
                                             'найти то, что вам нужно будь то общение или отношения.\nСоветуем '
                                             'пройти регистрацию, чтоб скоее сделать это!', parse_mode="HTML",
                            reply_markup=markup)
-
+    if message.chat.username is None:
+        markup = types.ReplyKeyboardRemove(selective=False)
+        bot.send_message(message.chat.id,'Вам в найтроках телеграма необдоходимо указать свой username, а после снова '
+                                         'воспользоваться в боте комадой /start', markup)
+        return
     bot.register_next_step_handler(msg, send_name)
 
 
@@ -180,10 +184,6 @@ def send_description(message):
 def last_process(message):
     # Тут надо записывать данные
     us.description = message.text
-    if message.chat.username is None:
-        bot.send_message(message.chat.id,'Вам в найтроках телеграма необдоходимо указать свой username, а после снова '
-                                         'воспользоваться в боте комадой /start')
-        return
     cursor.execute(
         "INSERT INTO users (NAME,GENDER,age,city,search_gender,photo_id,"
         "hobbies,target,description,ms_id,latitude,longitude,file_unique_id,us_url) "
