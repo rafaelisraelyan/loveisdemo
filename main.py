@@ -58,7 +58,6 @@ def hello(message):
 
 
 def send_name(message):
-    us = User()
     if message.text.lower() == 'регистрация':
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
         name = types.KeyboardButton("{0.first_name}".format(message.from_user))
