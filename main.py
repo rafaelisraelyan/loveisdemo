@@ -42,6 +42,9 @@ def connection(message):
 
 @bot.message_handler(commands=['start'])
 def hello(message):
+    reg_id = []
+    reg_id = cursor.execute("SELECT * FROM loveis.public.users WHERE ms_id= (%s) ;", message.chat.id)
+    print(reg_id)
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
     reg = types.KeyboardButton('Регистрация')
     markup.add(reg)
@@ -51,8 +54,8 @@ def hello(message):
                            reply_markup=markup)
     if message.chat.username is None:
         markup = types.ReplyKeyboardRemove(selective=False)
-        bot.send_message(message.chat.id,'Вам в найтроках телеграма необдоходимо указать свой username, а после снова '
-                                         'воспользоваться в боте комадой /start', markup)
+        bot.send_message(message.chat.id, 'Вам в найтроках телеграма необдоходимо указать свой username, а после снова '
+                                          'воспользоваться в боте комадой /start', markup)
         return
     bot.register_next_step_handler(msg, send_name)
 
@@ -91,7 +94,8 @@ def send_city(message):
     try:
         # /////////
         us.age = message.text
-        msg = bot.send_message(message.chat.id, "Введите город? \n<i>Для точности лучше отправьте геопозиция</i>", parse_mode = 'html')
+        msg = bot.send_message(message.chat.id, "Введите город? \n<i>Для точности лучше отправьте геопозиция</i>",
+                               parse_mode='html')
         bot.register_next_step_handler(msg, send_gender)
     except Exception as e:
         bot.reply_to(message, f'oops!! {e}')
@@ -153,7 +157,8 @@ def send_search_target(message):
 
 
 def send_photo(message):
-    if (message.text != 'Парни') and (message.text != 'Девушки') and (message.text != 'Вертолеты') and (message.text != 'Всё равно'):
+    if (message.text != 'Парни') and (message.text != 'Девушки') and (message.text != 'Вертолеты') and (
+            message.text != 'Всё равно'):
         bot.send_message(message.from_user.id, 'Нужно ввести что-то из предложенного')
         message.text = us.target
         send_search_target(message)
@@ -182,17 +187,35 @@ def send_description(message):
 
 def last_process(message):
     # Тут надо записывать данные
+    markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard='true')
+    yes = types.KeyboardButton('Да')
+    no = types.KeyboardButton('Нет')
+    markup.add(yes, no)
     us.description = message.text
-    cursor.execute(
-        "INSERT INTO users (NAME,GENDER,age,city,search_gender,photo_id,"
-        "hobbies,target,description,ms_id,latitude,longitude,file_unique_id,us_url) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s);",
-        (us.name, us.gender, us.age, us.city, us.search_gender, us.photo_id, us.hobbies,
-         us.target, us.description, message.chat.id, us.latitude, us.longitude, us.file_unique_id, message.chat.username))
-    connection_bd.commit()
-    markup = types.ReplyKeyboardRemove(selective=False)
-    bot.send_message(message.chat.id, "Окей \n Вы успешно зарегистрированы.", reply_markup=markup)
-    print('Регистрация')
+    bot.send_photo(message.chat.id, us.photo_id, caption=f'{us.name} {us.age} - {us.city} \n {us.description}')
+    msq = bot.send_message(message.chat.id, 'Всё верно?', reply_markup=markup)
+    bot.register_next_step_handler(msq, end_registr)
+
+
+def end_registr(message):
+    if message.text == 'Да':
+        cursor.execute(
+            "INSERT INTO users (NAME,GENDER,age,city,search_gender,photo_id,"
+            "hobbies,target,description,ms_id,latitude,longitude,file_unique_id,us_url) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s);",
+            (us.name, us.gender, us.age, us.city, us.search_gender, us.photo_id, us.hobbies,
+             us.target, us.description, message.chat.id, us.latitude, us.longitude, us.file_unique_id,
+             message.chat.username))
+        connection_bd.commit()
+        markup = types.ReplyKeyboardRemove(selective=False)
+        bot.send_message(message.chat.id, "Окей \n Вы успешно зарегистрированы.", reply_markup=markup)
+        print('Регистрация')
+    elif message.text == 'Нет':
+        bot.send_message(message.chat.id, 'Попробуйте снова)')
+        message.text = 'Регистрация'
+        send_name(message)
+    else:
+        last_process(message)
 
 
 bot.polling()
