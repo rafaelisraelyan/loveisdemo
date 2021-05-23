@@ -25,6 +25,7 @@ bot = telebot.TeleBot(config.TOKEN, parse_mode='HTML')
 connection_bd = psycopg2.connect(dbname=config.db_name, user=config.db_user, password=config.db_password,
                                  host=config.db_host)
 cursor = connection_bd.cursor()
+user_data = {}
 
 
 @bot.message_handler(commands=['about'])
@@ -41,8 +42,6 @@ def connection(message):
 
 @bot.message_handler(commands=['start'])
 def hello(message):
-    global us
-    us = User()
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
     reg = types.KeyboardButton('Регистрация')
     markup.add(reg)
@@ -63,7 +62,7 @@ def send_name(message):
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
         name = types.KeyboardButton("{0.first_name}".format(message.from_user))
         markup.add(name)
-
+        user_data[message.chat.id] = User()
         msg = bot.send_message(message.chat.id, "Как вас зовут? ", reply_markup=markup)
         bot.register_next_step_handler(msg, send_age)
     else:
@@ -75,7 +74,9 @@ def send_age(message):
     markup = types.ReplyKeyboardRemove(selective=False)
     msg = bot.send_message(message.chat.id, "Сколько Вам лет? \n <i>Просим указывать честный возраст</i>",
                            parse_mode="html", reply_markup=markup)
-    us.name = message.text
+
+    user = user_data[message.chat.id]
+    user.name = message.text
     bot.register_next_step_handler(msg, send_city)
 
 
@@ -91,7 +92,8 @@ def send_city(message):
         return
     try:
         # /////////
-        us.age = message.text
+        user = user_data[message.chat.id]
+        user.age = message.text
         msg = bot.send_message(message.chat.id, "Введите город? \n<i>Для точности лучше отправьте геопозиция</i>",
                                parse_mode='html')
         bot.register_next_step_handler(msg, send_gender)
@@ -101,12 +103,15 @@ def send_city(message):
 
 def send_gender(message):
     if message.content_type == 'location':
-        us.longitude = message.location.longitude
-        us.latitude = message.location.latitude
+        user = user_data[message.chat.id]
+        user.longitude = message.location.longitude
+        user.latitude = message.location.latitud
     elif message.content_type == 'text':
-        us.city = message.text
+        user = user_data[message.chat.id]
+        user.city = message.text
     else:
-        message.text = us.age
+        user = user_data[message.chat.id]
+        message.text = user.age
         send_city(message)
         return
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
@@ -125,7 +130,8 @@ def send_target(message):
         message.text = ''
         send_gender(message)
         return
-    us.gender = message.text
+    user = user_data[message.chat.id]
+    user.gender = message.text
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     communication = types.KeyboardButton('Общение')
     couple = types.KeyboardButton('Найти пару')
@@ -139,10 +145,12 @@ def send_target(message):
 def send_search_target(message):
     if (message.text != 'Общение') and (message.text != 'Найти пару') and (message.text != 'Быстрые знакомства'):
         bot.send_message(message.from_user.id, 'Нужно ввести что-то из предложенного')
-        message.text = us.gender
+        user = user_data[message.chat.id]
+        message.text = user.gender
         send_target(message)
         return
-    us.target = message.text
+    user = user_data[message.chat.id]
+    user.target = message.text
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     men = types.KeyboardButton('Парни')
     women = types.KeyboardButton('Девушки')
@@ -158,13 +166,15 @@ def send_photo(message):
     if (message.text != 'Парни') and (message.text != 'Девушки') and (message.text != 'Вертолеты') and (
             message.text != 'Всё равно'):
         bot.send_message(message.from_user.id, 'Нужно ввести что-то из предложенного')
-        message.text = us.target
+        user = user_data[message.chat.id]
+        message.text = user.target
         send_search_target(message)
         return
     markup = types.ReplyKeyboardRemove(selective=False)
     msg = bot.send_message(message.from_user.id, 'Отправьте своё фото \n <i>Пожалуйста отправляйте свою фотографию</i>',
                            parse_mode='html', reply_markup=markup)
-    us.search_gender = message.text
+    user = user_data[message.chat.id]
+    user.search_gender = message.text
     bot.register_next_step_handler(msg, send_description)
 
 
@@ -172,10 +182,12 @@ def send_description(message):
     if message.content_type == 'photo':
         print(message.photo[1].file_id)
         print(message.photo[1].file_unique_id)
-        us.photo_id = message.photo[1].file_id
-        us.file_unique_id = message.photo[1].file_unique_id
+        user = user_data[message.chat.id]
+        user.photo_id = message.photo[1].file_id
+        user.file_unique_id = message.photo[1].file_unique_id
     else:
-        message.text = us.search_gender
+        user = user_data[message.chat.id]
+        message.text = user.search_gender
         send_photo(message)
         return
     # TODO сделать так, чтобы если у человека была анкета, то ему предлагали оставить предыдущее
@@ -189,31 +201,35 @@ def last_process(message):
     yes = types.KeyboardButton('Да')
     no = types.KeyboardButton('Нет')
     markup.add(yes, no)
-    us.description = message.text
-    bot.send_photo(message.chat.id, us.photo_id, caption=f'{us.name} {us.age} - {us.city} \n {us.description}')
+    user = user_data[message.chat.id]
+    user.description = message.text
+    bot.send_photo(message.chat.id, user.photo_id, caption=f'{user.name} {user.age} - {user.city} \n {user.description}')
     msq = bot.send_message(message.chat.id, 'Всё верно?', reply_markup=markup)
     bot.register_next_step_handler(msq, end_registr)
 
 
 def end_registr(message):
+    user = user_data[message.chat.id]
     if message.text == 'Да':
         cursor.execute(
             "INSERT INTO users (NAME,GENDER,age,city,search_gender,photo_id,"
             "hobbies,target,description,ms_id,latitude,longitude,file_unique_id,us_url) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s);",
-            (us.name, us.gender, us.age, us.city, us.search_gender, us.photo_id, us.hobbies,
-             us.target, us.description, message.chat.id, us.latitude, us.longitude, us.file_unique_id,
+            (user.name, user.gender, user.age, user.city, user.search_gender, user.photo_id, user.hobbies,
+             user.target, user.description, message.chat.id, user.latitude, user.longitude, user.file_unique_id,
              message.chat.username))
         connection_bd.commit()
         markup = types.ReplyKeyboardRemove(selective=False)
         bot.send_message(message.chat.id, "Окей \n Вы успешно зарегистрированы.", reply_markup=markup)
         print('Регистрация')
+        user_data[message.chat.id] = None
     elif message.text == 'Нет':
         bot.send_message(message.chat.id, 'Попробуйте снова)')
         message.text = 'Регистрация'
         send_name(message)
     else:
         last_process(message)
+
 
 
 bot.polling()
