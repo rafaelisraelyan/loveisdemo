@@ -22,7 +22,6 @@ class User:
 
 
 bot = telebot.TeleBot(config.TOKEN, parse_mode='HTML')
-us = User()
 connection_bd = psycopg2.connect(dbname=config.db_name, user=config.db_user, password=config.db_password,
                                  host=config.db_host)
 cursor = connection_bd.cursor()
@@ -42,9 +41,8 @@ def connection(message):
 
 @bot.message_handler(commands=['start'])
 def hello(message):
-    reg_id = []
-    reg_id = cursor.execute("SELECT * FROM loveis.public.users WHERE ms_id= (%s) ;", message.chat.id)
-    print(reg_id)
+    global us
+    us = User()
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
     reg = types.KeyboardButton('Регистрация')
     markup.add(reg)
@@ -172,10 +170,10 @@ def send_photo(message):
 
 def send_description(message):
     if message.content_type == 'photo':
-        print(message.photo[2].file_id)
-        print(message.photo[2].file_unique_id)
-        us.photo_id = message.photo[2].file_id
-        us.file_unique_id = message.photo[2].file_unique_id
+        print(message.photo[1].file_id)
+        print(message.photo[1].file_unique_id)
+        us.photo_id = message.photo[1].file_id
+        us.file_unique_id = message.photo[1].file_unique_id
     else:
         message.text = us.search_gender
         send_photo(message)
