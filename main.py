@@ -42,19 +42,26 @@ def connection(message):
 
 @bot.message_handler(commands=['start'])
 def hello(message):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
-    reg = types.KeyboardButton('Регистрация')
-    markup.add(reg)
-    msg = bot.send_message(message.chat.id, 'Здравствуйте, это телеграм бот для знакомств. \nНаша главная цель - '
+    cursor.execute("SELECT * FROM loveis.public.users WHERE ms_id = (%s)", [message.chat.id])
+
+    result = cursor.fetchall()
+    if result is None:
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+        reg = types.KeyboardButton('Регистрация')
+        markup.add(reg)
+        msg = bot.send_message(message.chat.id, 'Здравствуйте, это телеграм бот для знакомств. \nНаша главная цель - '
                                             'найти то, что вам нужно будь то общение или отношения.\nСоветуем '
                                             'пройти регистрацию, чтоб скоее сделать это!', parse_mode="HTML",
                            reply_markup=markup)
-    if message.chat.username is None:
-        markup = types.ReplyKeyboardRemove(selective=False)
-        bot.send_message(message.chat.id, 'Вам в найтроках телеграма необдоходимо указать свой username, а после снова '
+        if message.chat.username is None:
+            markup = types.ReplyKeyboardRemove(selective=False)
+            bot.send_message(message.chat.id, 'Вам в найтроках телеграма необдоходимо указать свой username, а после снова '
                                           'воспользоваться в боте комадой /start', markup)
-        return
-    bot.register_next_step_handler(msg, send_name)
+            return
+        bot.register_next_step_handler(msg, send_name)
+    else:
+        markup1 = types.ReplyKeyboardRemove(selective=False)
+        bot.send_message(message.chat.id, 'ФЕЙСПАЛП ЧЕЛ ТЫ ЗАРЕГАН', reply_markup=markup1)
 
 
 def send_name(message):
@@ -203,7 +210,8 @@ def last_process(message):
     markup.add(yes, no)
     user = user_data[message.chat.id]
     user.description = message.text
-    bot.send_photo(message.chat.id, user.photo_id, caption=f'{user.name} {user.age} - {user.city} \n {user.description}')
+    bot.send_photo(message.chat.id, user.photo_id,
+                   caption=f'{user.name} {user.age} - {user.city} \n {user.description}')
     msq = bot.send_message(message.chat.id, 'Всё верно?', reply_markup=markup)
     bot.register_next_step_handler(msq, end_registr)
 
@@ -211,25 +219,29 @@ def last_process(message):
 def end_registr(message):
     user = user_data[message.chat.id]
     if message.text == 'Да':
-        cursor.execute(
-            "INSERT INTO users (NAME,GENDER,age,city,search_gender,photo_id,"
-            "hobbies,target,description,ms_id,latitude,longitude,file_unique_id,us_url) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s);",
-            (user.name, user.gender, user.age, user.city, user.search_gender, user.photo_id, user.hobbies,
-             user.target, user.description, message.chat.id, user.latitude, user.longitude, user.file_unique_id,
-             message.chat.username))
-        connection_bd.commit()
-        markup = types.ReplyKeyboardRemove(selective=False)
-        bot.send_message(message.chat.id, "Окей \n Вы успешно зарегистрированы.", reply_markup=markup)
-        print('Регистрация')
-        user_data[message.chat.id] = None
+        try:
+            cursor.execute(
+                "INSERT INTO users (NAME,GENDER,age,city,search_gender,photo_id,"
+                "hobbies,target,description,ms_id,latitude,longitude,file_unique_id,us_url) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s);",
+                (user.name, user.gender, user.age, user.city, user.search_gender, user.photo_id, user.hobbies,
+                 user.target, user.description, message.chat.id, user.latitude, user.longitude, user.file_unique_id,
+                 message.chat.username))
+            connection_bd.commit()
+            markup = types.ReplyKeyboardRemove(selective=False)
+            bot.send_message(message.chat.id, "Окей \n Вы успешно зарегистрированы.", reply_markup=markup)
+            print('Регистрация')
+            user_data[message.chat.id] = None
+        except:
+            bot.send_message(message.chat.id, 'Неизвестная ошибка')
+            message.text = 'Регистрация'
+            send_name(message)
     elif message.text == 'Нет':
         bot.send_message(message.chat.id, 'Попробуйте снова)')
         message.text = 'Регистрация'
         send_name(message)
     else:
         last_process(message)
-
 
 
 bot.polling()
