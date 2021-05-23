@@ -45,18 +45,20 @@ def hello(message):
     cursor.execute("SELECT * FROM loveis.public.users WHERE ms_id = (%s)", [message.chat.id])
 
     result = cursor.fetchall()
-    if result is None:
+    print(result)
+    if len(result) == 0:
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
         reg = types.KeyboardButton('Регистрация')
         markup.add(reg)
         msg = bot.send_message(message.chat.id, 'Здравствуйте, это телеграм бот для знакомств. \nНаша главная цель - '
-                                            'найти то, что вам нужно будь то общение или отношения.\nСоветуем '
-                                            'пройти регистрацию, чтоб скоее сделать это!', parse_mode="HTML",
-                           reply_markup=markup)
+                                                'найти то, что вам нужно будь то общение или отношения.\nСоветуем '
+                                                'пройти регистрацию, чтоб скоее сделать это!', parse_mode="HTML",
+                               reply_markup=markup)
         if message.chat.username is None:
             markup = types.ReplyKeyboardRemove(selective=False)
-            bot.send_message(message.chat.id, 'Вам в найтроках телеграма необдоходимо указать свой username, а после снова '
-                                          'воспользоваться в боте комадой /start', markup)
+            bot.send_message(message.chat.id, 'Вам в найтроках телеграма необдоходимо указать свой username, а после '
+                                              'снова '
+                                              'воспользоваться в боте комадой /start', markup)
             return
         bot.register_next_step_handler(msg, send_name)
     else:
@@ -232,7 +234,7 @@ def end_registr(message):
             bot.send_message(message.chat.id, "Окей \n Вы успешно зарегистрированы.", reply_markup=markup)
             print('Регистрация')
             user_data[message.chat.id] = None
-        except:
+        except Exception:
             bot.send_message(message.chat.id, 'Неизвестная ошибка')
             message.text = 'Регистрация'
             send_name(message)
