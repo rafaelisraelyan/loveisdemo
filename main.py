@@ -31,13 +31,13 @@ user_data = {}
 @bot.message_handler(commands=['about'])
 def txt(message):
     bot.send_message(message.chat.id, 'Здравствуйте, это телеграм бот для знакомств. \nНаша главная цель - '
-                                      'найти то, что вам нужно будь то общение или отношения.\nСоветуем '
-                                      'пройти регистрацию, чтоб скоее сделать это!', parse_mode="HTML")
+                                      'помочь вам найти здесь общение или отношения.\nСоветуем скорее '
+                                      'пройти регистрацию, чтобы сделать это!', parse_mode="HTML")
 
 
 @bot.message_handler(commands=['connection'])
 def connection(message):
-    bot.send_message(message.chat.id, 'Если что-то не так обращайтесь к разработчикам @Raa_is @El1Tiburon')
+    bot.send_message(message.chat.id, 'Обнаружили ошибку или хотите что-то предложить? Обращайтесь к разработчикам @Raa_is @El1Tiburon')
 
 
 @bot.message_handler(commands=['start'])
@@ -50,24 +50,31 @@ def hello(message):
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
         reg = types.KeyboardButton('Регистрация')
         markup.add(reg)
-        msg = bot.send_message(message.chat.id, 'Здравствуйте, это телеграм бот для знакомств. \nНаша главная цель - '
-                                                'найти то, что вам нужно будь то общение или отношения.\nСоветуем '
-                                                'пройти регистрацию, чтоб скоее сделать это!', parse_mode="HTML",
+        msg = bot.send_message(message.chat.id, 'Здравствуйте, это телеграмм бот для знакомств. \nНаша главная цель - '
+                                                'помочь вам найти здесь общение или отношения.\nСоветуем скорее '
+                                                'пройти регистрацию, чтобы сделать это!', parse_mode="HTML",
                                reply_markup=markup)
         if message.chat.username is None:
             markup = types.ReplyKeyboardRemove(selective=False)
-            bot.send_message(message.chat.id, 'Вам в найтроках телеграма необдоходимо указать свой username, а после '
+            bot.send_message(message.chat.id, 'Вам в настройках телеграмма необдоходимо указать свой @username, а после '
                                               'снова '
                                               'воспользоваться в боте комадой /start', markup)
             return
         bot.register_next_step_handler(msg, send_name)
     else:
         markup1 = types.ReplyKeyboardRemove(selective=False)
-        bot.send_message(message.chat.id, 'ФЕЙСПАЛП ЧЕЛ ТЫ ЗАРЕГАН', reply_markup=markup1)
+        bot.send_message(message.chat.id, 'Вы уже зарегестрирвоались ранее.', reply_markup=markup1)
+        markup = types.ReplyKeyboardMarkup(selective=True, row_width=2, resize_keyboard='true')
+        yes = types.KeyboardButton('Да')
+        no = types.KeyboardButton('Нет')
+        #show = types.KeyboardButton('Показать мою анкету') TODO Сделать вывод анкеты
+        markup.add(yes, no)
+        msq = bot.send_message(message.chat.id, 'Хотите обновить анкету?', reply_markup=markup)
+        bot.register_next_step_handler(msq, send_name)
 
 
 def send_name(message):
-    if message.text.lower() == 'регистрация':
+    if ((message.text.lower() == 'регистрация') or (message.text.lower()=='да')):
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
         name = types.KeyboardButton("{0.first_name}".format(message.from_user))
         markup.add(name)
@@ -92,7 +99,7 @@ def send_age(message):
 def send_city(message):
     try:
         if 12 > int(message.text) or int(message.text) > 100:
-            bot.send_message(message.from_user.id, "Вам нужно ввести возраст от 12 и до 100!")
+            bot.send_message(message.from_user.id, "Вам нужно ввести возраст от 12 до 100!")
             send_age(message)
             return
     except ValueError:
@@ -199,7 +206,7 @@ def send_description(message):
         message.text = user.search_gender
         send_photo(message)
         return
-    # TODO сделать так, чтобы если у человека была анкета, то ему предлагали оставить предыдущее
+    # TODO сделать так, чтобы если у человека была анкета, то ему предлагали оставить предыдущее !!!Cделал в регистре!!!
     msg = bot.send_message(message.chat.id, "Напишите что-нибудь о себе")
     bot.register_next_step_handler(msg, last_process)
 
