@@ -21,7 +21,7 @@ def haversine(lat1, lon1, lat2, lon2):
     rad = 6371 #радиус земли
     c = 2 * math.asin(math.sqrt(a))
     return rad * c
-# Код теста
+# Код теста погрешность 3-20 км (внутри города, 2000 км)
 if __name__ == "__main__":
     lat1 = 59.816799833363270
     lon1 = 30.402098990503546
