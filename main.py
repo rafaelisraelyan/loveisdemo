@@ -241,18 +241,20 @@ def end_registr(message):
                 cursor.execute("UPDATE users SET name = %s, gender = %s, age = %s, city = %s,search_gender = %s, "
                                "photo_id = %s, hobbies = %s,target = %s,description = %s, ms_id = %s, latitude = %s, longitude = %s, "
                                "file_unique_id = %s, us_url = %s WHERE id = %s;",
-                               (user.name, user.gender, user.age, user.city, user.search_gender, user.photo_id, user.hobbies,
-                                user.target, user.description, message.chat.id, user.latitude, user.longitude, user.file_unique_id,
+                               (user.name, user.gender, user.age, user.city, user.search_gender, user.photo_id,
+                                user.hobbies,
+                                user.target, user.description, message.chat.id, user.latitude, user.longitude,
+                                user.file_unique_id,
                                 message.chat.username, result[0]))
                 connection_bd.commit()
             else:
                 cursor.execute(
-                "INSERT INTO users (NAME,GENDER,age,city,search_gender,photo_id,"
-                "hobbies,target,description,ms_id,latitude,longitude,file_unique_id,us_url) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s);",
-                (user.name, user.gender, user.age, user.city, user.search_gender, user.photo_id, user.hobbies,
-                 user.target, user.description, message.chat.id, user.latitude, user.longitude, user.file_unique_id,
-                 message.chat.username))
+                    "INSERT INTO users (NAME,GENDER,age,city,search_gender,photo_id,"
+                    "hobbies,target,description,ms_id,latitude,longitude,file_unique_id,us_url) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s);",
+                    (user.name, user.gender, user.age, user.city, user.search_gender, user.photo_id, user.hobbies,
+                     user.target, user.description, message.chat.id, user.latitude, user.longitude, user.file_unique_id,
+                     message.chat.username))
                 connection_bd.commit()
             markup = types.ReplyKeyboardRemove(selective=False)
             bot.send_message(message.chat.id, "Окей \n Вы успешно зарегистрированы.", reply_markup=markup)
@@ -270,5 +272,10 @@ def end_registr(message):
         last_process(message)
 
 
+def search_people():
+    markup = types.ReplyKeyboardMarkup(resize_keyboard='true')
+    like = types.KeyboardButton('❤')
+    like_message = types.KeyboardButton('💌')
+    menu = types.KeyboardButton('')
 
 bot.polling()
