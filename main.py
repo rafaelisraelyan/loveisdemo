@@ -69,7 +69,7 @@ def hello(message):
         markup = types.ReplyKeyboardMarkup(selective=True, row_width=2, resize_keyboard='true')
         yes = types.KeyboardButton('Да')
         no = types.KeyboardButton('Нет')
-        # show = types.KeyboardButton('Показать мою анкету') TODO Сделать вывод анкеты
+        # show = types.KeyboardButton('Показать мою анкету') TODO Сделать вывод анкеты!!!
         markup.add(yes, no)
         msq = bot.send_message(message.chat.id, 'Хотите обновить анкету?', reply_markup=markup)
         bot.register_next_step_handler(msq, send_name)
@@ -212,7 +212,7 @@ def send_description(message):
         message.text = user.search_gender
         send_photo(message)
         return
-    # TODO сделать так, чтобы если у человека была анкета, то ему предлагали оставить предыдущее !!!Cделал в регистре!!!
+    # TODO !сделать так, чтобы если у человека была анкета, то ему предлагали оставить предыдущее !!!Cделал в регистре!!!
     msg = bot.send_message(message.chat.id, "Напишите что-нибудь о себе")
     bot.register_next_step_handler(msg, last_process)
 
