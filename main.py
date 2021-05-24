@@ -259,6 +259,7 @@ def end_registr(message):
             markup = types.ReplyKeyboardRemove(selective=False)
             bot.send_message(message.chat.id, "Окей \n Вы успешно зарегистрированы.", reply_markup=markup)
             print('Регистрация')
+            search_people(message,user_data[message.chat.id])
             user_data[message.chat.id] = None
         except Exception:
             bot.send_message(message.chat.id, 'Неизвестная ошибка')
@@ -272,10 +273,17 @@ def end_registr(message):
         last_process(message)
 
 
-def search_people():
+def search_people(message, user):
+    cursor.execute("SELECT * FROM users WHERE (gender = %s) and (age = %s) and (target = %s) and (city = %s)", (user.search_gender,
+                                                                                                                user.age, user.target, user.city))
+    connection_bd.commit()
+    result = cursor.fetchall()
     markup = types.ReplyKeyboardMarkup(resize_keyboard='true')
     like = types.KeyboardButton('❤')
     like_message = types.KeyboardButton('💌')
-    menu = types.KeyboardButton('')
+    menu = types.KeyboardButton('⚙')
+    markup.add(like, like_message, menu)
+    bot.send_message(message.chat.id, "Смотри   ", reply_markup=markup)
+
 
 bot.polling()
