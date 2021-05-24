@@ -19,6 +19,7 @@ class User:
         self.longitude = 0
         self.latitude = 0
         self.file_unique_id = 0
+        self.update = False
 
 
 bot = telebot.TeleBot(config.TOKEN, parse_mode='HTML')
@@ -37,7 +38,8 @@ def txt(message):
 
 @bot.message_handler(commands=['connection'])
 def connection(message):
-    bot.send_message(message.chat.id, 'Обнаружили ошибку или хотите что-то предложить? Обращайтесь к разработчикам @Raa_is @El1Tiburon')
+    bot.send_message(message.chat.id,
+                     'Обнаружили ошибку или хотите что-то предложить? Обращайтесь к разработчикам @Raa_is @El1Tiburon')
 
 
 @bot.message_handler(commands=['start'])
@@ -56,8 +58,8 @@ def hello(message):
                                reply_markup=markup)
         if message.chat.username is None:
             markup = types.ReplyKeyboardRemove(selective=False)
-            bot.send_message(message.chat.id, 'Вам в настройках телеграмма необдоходимо указать свой @username, а после '
-                                              'снова '
+            bot.send_message(message.chat.id, 'Вам в настройках телеграмма необдоходимо указать свой @username, '
+                                              'а после снова '
                                               'воспользоваться в боте комадой /start', markup)
             return
         bot.register_next_step_handler(msg, send_name)
@@ -67,18 +69,22 @@ def hello(message):
         markup = types.ReplyKeyboardMarkup(selective=True, row_width=2, resize_keyboard='true')
         yes = types.KeyboardButton('Да')
         no = types.KeyboardButton('Нет')
-        #show = types.KeyboardButton('Показать мою анкету') TODO Сделать вывод анкеты
+        # show = types.KeyboardButton('Показать мою анкету') TODO Сделать вывод анкеты
         markup.add(yes, no)
         msq = bot.send_message(message.chat.id, 'Хотите обновить анкету?', reply_markup=markup)
         bot.register_next_step_handler(msq, send_name)
 
 
 def send_name(message):
-    if ((message.text.lower() == 'регистрация') or (message.text.lower()=='да')):
+    if (message.text.lower() == 'регистрация') or (message.text.lower() == 'да'):
+        user_data[message.chat.id] = User()
+        if message.text.lower() == 'да':
+            user = user_data[message.chat.id]
+            user.update = True
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
         name = types.KeyboardButton("{0.first_name}".format(message.from_user))
         markup.add(name)
-        user_data[message.chat.id] = User()
+
         msg = bot.send_message(message.chat.id, "Как вас зовут? ", reply_markup=markup)
         bot.register_next_step_handler(msg, send_age)
     else:
@@ -121,7 +127,7 @@ def send_gender(message):
     if message.content_type == 'location':
         user = user_data[message.chat.id]
         user.longitude = message.location.longitude
-        user.latitude = message.location.latitud
+        user.latitude = message.location.latitude
     elif message.content_type == 'text':
         user = user_data[message.chat.id]
         user.city = message.text
@@ -227,16 +233,27 @@ def last_process(message):
 
 def end_registr(message):
     user = user_data[message.chat.id]
-    if message.text == 'Да':
+    cursor.execute("SELECT id FROM users WHERE ms_id = (%s)", [message.chat.id])
+    result = cursor.fetchall()
+    if message.text.lower() == 'да':
         try:
-            cursor.execute(
+            if user.update:
+                cursor.execute("UPDATE users SET name = %s, gender = %s, age = %s, city = %s,search_gender = %s, "
+                               "photo_id = %s, hobbies = %s,target = %s,description = %s, ms_id = %s, latitude = %s, longitude = %s, "
+                               "file_unique_id = %s, us_url = %s WHERE id = %s;",
+                               (user.name, user.gender, user.age, user.city, user.search_gender, user.photo_id, user.hobbies,
+                                user.target, user.description, message.chat.id, user.latitude, user.longitude, user.file_unique_id,
+                                message.chat.username, result[0]))
+                connection_bd.commit()
+            else:
+                cursor.execute(
                 "INSERT INTO users (NAME,GENDER,age,city,search_gender,photo_id,"
                 "hobbies,target,description,ms_id,latitude,longitude,file_unique_id,us_url) "
                 "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s);",
                 (user.name, user.gender, user.age, user.city, user.search_gender, user.photo_id, user.hobbies,
                  user.target, user.description, message.chat.id, user.latitude, user.longitude, user.file_unique_id,
                  message.chat.username))
-            connection_bd.commit()
+                connection_bd.commit()
             markup = types.ReplyKeyboardRemove(selective=False)
             bot.send_message(message.chat.id, "Окей \n Вы успешно зарегистрированы.", reply_markup=markup)
             print('Регистрация')
@@ -251,6 +268,7 @@ def end_registr(message):
         send_name(message)
     else:
         last_process(message)
+
 
 
 bot.polling()
