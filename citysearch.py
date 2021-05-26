@@ -1,8 +1,8 @@
 #Importing the Nominatim geocoder class 
 from geopy.geocoders import Nominatim
 
-#address we need to geocodedad
-loc = 'Краснодар'
+#address we need to geocode
+loc = 'Москва'
 
 #making an instance of Nominatim class
 geolocator = Nominatim(user_agent="my_request")
