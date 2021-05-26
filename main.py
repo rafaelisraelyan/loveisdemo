@@ -17,7 +17,7 @@ class User:
         self.hobbies = ''
         self.description = ''
         self.target = ''
-        self.ms_id = 0
+        self.us_id = 0
         self.longitude = 0
         self.latitude = 0
         self.file_unique_id = 0
@@ -128,10 +128,10 @@ def send_city(message):
 def send_gender(message):
     if message.content_type == 'location':
         user = user_data[message.chat.id]
-        city_search = citySearch(lat=message.location.latitude, lon=message.location.longitude)
+        city_search = citySearch(lon=message.location.longitude, lat=message.location.latitude)
         user.city = city_search.city
-        user.latitude = message.location.latitude
         user.longitude = message.location.longitude
+        user.latitude = message.location.latitude
         print(user.city)
     elif message.content_type == 'text':
         user = user_data[message.chat.id]
@@ -247,8 +247,10 @@ def last_process(message):
 
 def end_registr(message):
     user = user_data[message.chat.id]
+    user.us_id = message.chat.id
     if message.text.lower() == 'да':
         try:
+
             if user.update:
                 cursor.execute("UPDATE users SET name = %s, gender = %s, age = %s, city = %s,search_gender = %s, "
                                "photo_id = %s, hobbies = %s,target = %s,description = %s, us_id = %s, latitude = %s, longitude = %s, "
@@ -275,9 +277,10 @@ def end_registr(message):
             user_data[message.chat.id] = None
             return
         except Exception as e:
-            bot.reply_to(message.chat.id, e)
+            # bot.reply_to(e)
             message.text = 'Регистрация'
             send_name(message)
+            return
     elif message.text == 'Нет':
         bot.send_message(message.chat.id, 'Попробуйте снова)')
         message.text = 'Регистрация'
@@ -288,24 +291,25 @@ def end_registr(message):
         return
 
 
-'''def search_people(message, user):
-    cursor.execute("SELECT * FROM users WHERE (age = %s) and (target = %s)", (user.age, user.target))
+def search_people(message, user):
+    cursor.execute("SELECT * FROM users WHERE ((age > %s-1) or (age > %s-1)) and (target = %s)", (user.age, user.age, user.target))
     connection_bd.commit()
     result = cursor.fetchall()
 
-    bot.send_photo(message.chat.id, result[0][6],
-                   caption=f'{result[0][1]} {result[0][3]} - {result[0][4]} \n {result[0][9]}')
     markup = types.ReplyKeyboardMarkup(resize_keyboard='true', row_width=4)
     like = types.KeyboardButton('❤')
     like_message = types.KeyboardButton('💌')
     dislike = types.KeyboardButton('👎')
     menu = types.KeyboardButton('⚙')
     markup.add(like, like_message, dislike, menu)
+    bot.send_photo(message.chat.id, result[0][5],
+                   caption=f'{result[0][0]} {result[0][2]} - {result[0][3]} \n {result[0][8]}', reply_markup=markup)
     bot.register_next_step_handler(message, event)
 
 
 def event(message):
     if message.text == '❤' or message.text == '💌':
+        print('zzzzzzz')
         if message.text == '💌':
             pass
     elif message.text == '👎':
@@ -315,5 +319,5 @@ def event(message):
     else:
         bot.send_message(message.chat.id, 'Не понимаю Вас')
 
-'''
+
 bot.polling()
