@@ -1,7 +1,7 @@
 #Importing the Nominatim geocoder class 
 from geopy.geocoders import Nominatim
 
-#address we need to geocode
+#address we need to geocodedad
 loc = 'Краснодар'
 
 #making an instance of Nominatim class

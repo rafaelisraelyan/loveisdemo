@@ -4,7 +4,7 @@ import config
 import psycopg2
 import math
 
-#cursor.execute("SELECT id FROM users WHERE ms_id = (%s)", [message.chat.id])
+#cursor.execute("SELECT id FROM users WHERE ms_id = (%s)", [message.chat.id])dada
 def haversine(lat1, lon1, lat2, lon2):
     # расстояние между широтой и долготой
     dLat = (lat2 - lat1) * math.pi / 180.0
