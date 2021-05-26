@@ -3,17 +3,17 @@ from functools import partial
 
 
 class citySearch:
-    def __init__(self, city=None, lon=None, lat=None):
+    def __init__(self, city=None,lat=None, lon=None):
         try:
             geolocator = Nominatim(user_agent='my_request')
             if lat is None and lon is None:
                 self.city = city
                 location = geolocator.geocode(self.city)
-                self.lon = location.longitude
                 self.lat = location.latitude
+                self.lon = location.longitude
             elif city is None:
-                self.lon = lon
                 self.lat = lat
+                self.lon = lon
                 partial(geolocator.reverse, language="ru")
                 location = geolocator.reverse(f"{self.lat},{self.lon}")
                 self.city = location.raw['address']['city']

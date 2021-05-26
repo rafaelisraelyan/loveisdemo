@@ -128,10 +128,10 @@ def send_city(message):
 def send_gender(message):
     if message.content_type == 'location':
         user = user_data[message.chat.id]
-        city_search = citySearch(lon=message.location.longitude, lat=message.location.latitude)
+        city_search = citySearch(lat=message.location.latitude, lon=message.location.longitude)
         user.city = city_search.city
-        user.longitude = message.location.longitude
         user.latitude = message.location.latitude
+        user.longitude = message.location.longitude
         print(user.city)
     elif message.content_type == 'text':
         user = user_data[message.chat.id]
@@ -288,7 +288,7 @@ def end_registr(message):
         return
 
 
-def search_people(message, user):
+'''def search_people(message, user):
     cursor.execute("SELECT * FROM users WHERE (age = %s) and (target = %s)", (user.age, user.target))
     connection_bd.commit()
     result = cursor.fetchall()
@@ -315,5 +315,5 @@ def event(message):
     else:
         bot.send_message(message.chat.id, 'Не понимаю Вас')
 
-
+'''
 bot.polling()

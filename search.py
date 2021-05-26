@@ -1,10 +1,6 @@
-import telebot
-from telebot import types
-import config
-import psycopg2
 import math
+from citysearch import citySearch
 
-#cursor.execute("SELECT id FROM users WHERE ms_id = (%s)", [message.chat.id])dada
 def haversine(lat1, lon1, lat2, lon2):
     # расстояние между широтой и долготой
     dLat = (lat2 - lat1) * math.pi / 180.0
@@ -23,8 +19,10 @@ def haversine(lat1, lon1, lat2, lon2):
     return rad * c
 # Код теста погрешность 3-20 км (внутри города, 2000 км)
 if __name__ == "__main__":
-    lat1 = 59.816799833363270
-    lon1 = 30.402098990503546
+    lat1 = 59.938732
+    lon1 = 30.316229
     lat2 = 45.023309000000000
     lon2 = 39.018187000000000
-    print(haversine(lat1, lon1, lat2, lon2), "K.M.")
+    city1=citySearch(lat=lat1,lon=lon1)
+    city2=citySearch(lat=lat2, lon=lon2)
+    print(round(haversine(lat1, lon1, lat2, lon2),2), "км. ",' между ',city1.city,' и ',city2.city)
