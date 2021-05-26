@@ -3,6 +3,8 @@ from telebot import types
 import config
 import psycopg2
 
+from search import calculate
+
 from citysearch import citySearch
 
 
@@ -67,31 +69,45 @@ def hello(message):
         bot.register_next_step_handler(msg, send_name)
     else:
         markup1 = types.ReplyKeyboardRemove(selective=False)
-        bot.send_message(message.chat.id, 'Вы уже зарегестрирвоались ранее.', reply_markup=markup1)
+        bot.send_message(message.chat.id, 'Вы уже зарегестрирвоались ранее', reply_markup=markup1)
         markup = types.ReplyKeyboardMarkup(selective=True, row_width=2, resize_keyboard='true')
         yes = types.KeyboardButton('Да')
         no = types.KeyboardButton('Нет')
-        # show = types.KeyboardButton('Показать мою анкету') TODO Сделать вывод анкеты!!!
-        markup.add(yes, no)
+        show = types.KeyboardButton('Показать мою анкету') #TODO Сделать вывод анкеты!!!
+        markup.add(yes, no, show)
         msq = bot.send_message(message.chat.id, 'Хотите обновить анкету?', reply_markup=markup)
         bot.register_next_step_handler(msq, send_name)
 
 
 def send_name(message):
+    #print(message.text.lower())
+    user_data[message.chat.id] = User()
     if (message.text.lower() == 'регистрация') or (message.text.lower() == 'да'):
-        user_data[message.chat.id] = User()
         if message.text.lower() == 'да':
             user = user_data[message.chat.id]
             user.update = True
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
         name = types.KeyboardButton("{0.first_name}".format(message.from_user))
         markup.add(name)
-
         msg = bot.send_message(message.chat.id, "Как вас зовут? ", reply_markup=markup)
         bot.register_next_step_handler(msg, send_age)
-    else:
+    elif message.text.lower() == 'нет':
         markup = types.ReplyKeyboardRemove(selective=False)
         bot.send_message(message.from_user.id, 'Просим прощения за беспокойство, приходите ещё)', reply_markup=markup)
+    '''elif message.text.lower() == 'показать мою анкету': #TODO **************************************************************************************************************
+        user = user_data[message.chat.id]
+        user.us_id = message.chat.id
+        print(user.city, message.chat.id, user.photo_id)
+        markup = types.ReplyKeyboardMarkup(selective=True, resize_keyboard=True, row_width=2)
+        yes = types.KeyboardButton('Изменить')
+        no = types.KeyboardButton('Оставить')
+        markup.add(yes, no)
+        ("SELECT * FROM users WHERE us_id = 'message.chat.id'")
+        bot.send_message(message.chat.id, f'{user.photo_id}\
+                        {user.name} {user.age} - {user.city} \n {user.description}')
+        msg = bot.send_message(message.chat.id, 'Хотите что-либо изменить?', reply_markup=markup)
+        bot.register_next_step_handler(msg, send_name)''' #TODO **************************************************************************************************************
+
 
 
 def send_age(message):
@@ -226,7 +242,7 @@ def send_description(message):
         message.text = user.search_gender
         send_photo(message)
         return
-    # TODO !сделать так, чтобы если у человека была анкета, то ему предлагали оставить предыдущее !!!Cделал в регистре!!!
+    # TODO !сделать так, чтобы если у человека была анкета, то ему предлагали оставить предыдущее
     msg = bot.send_message(message.chat.id, "Напишите что-нибудь о себе")
     bot.register_next_step_handler(msg, last_process)
 
