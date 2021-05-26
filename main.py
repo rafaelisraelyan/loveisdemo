@@ -3,6 +3,9 @@ from telebot import types
 import config
 import psycopg2
 
+from citysearch import citySearch
+
+
 class User:
     def __init__(self):
         self.name = ''
@@ -43,7 +46,7 @@ def connection(message):
 
 @bot.message_handler(commands=['start'])
 def hello(message):
-    cursor.execute("SELECT * FROM loveis.public.users WHERE ms_id = (%s)", [message.chat.id])
+    cursor.execute("SELECT * FROM loveis.public.users WHERE us_id = (%s)", [message.chat.id])
 
     result = cursor.fetchall()
     print(result)
@@ -125,11 +128,23 @@ def send_city(message):
 def send_gender(message):
     if message.content_type == 'location':
         user = user_data[message.chat.id]
+        city_search = citySearch(lon=message.location.longitude, lat=message.location.latitude)
+        user.city = city_search.city
         user.longitude = message.location.longitude
         user.latitude = message.location.latitude
+        print(user.city)
     elif message.content_type == 'text':
         user = user_data[message.chat.id]
-        user.city = message.text
+        city_search = citySearch(city=message.text)
+        if city_search.lon is None and city_search.lat:
+            user = user_data[message.chat.id]
+            message.text = user.age
+            send_city(message)
+            return
+        else:
+            user.city = message.text
+            user.longitude = city_search.lon
+            user.latitude = city_search.lat
     else:
         user = user_data[message.chat.id]
         message.text = user.age
@@ -232,24 +247,22 @@ def last_process(message):
 
 def end_registr(message):
     user = user_data[message.chat.id]
-    cursor.execute("SELECT id FROM users WHERE ms_id = (%s)", [message.chat.id])
-    result = cursor.fetchall()
     if message.text.lower() == 'да':
         try:
             if user.update:
                 cursor.execute("UPDATE users SET name = %s, gender = %s, age = %s, city = %s,search_gender = %s, "
-                               "photo_id = %s, hobbies = %s,target = %s,description = %s, ms_id = %s, latitude = %s, longitude = %s, "
-                               "file_unique_id = %s, us_url = %s WHERE id = %s;",
+                               "photo_id = %s, hobbies = %s,target = %s,description = %s, us_id = %s, latitude = %s, longitude = %s, "
+                               "file_unique_id = %s, us_url = %s WHERE us_id = %s;",
                                (user.name, user.gender, user.age, user.city, user.search_gender, user.photo_id,
                                 user.hobbies,
                                 user.target, user.description, message.chat.id, user.latitude, user.longitude,
                                 user.file_unique_id,
-                                message.chat.username, result[0]))
+                                message.chat.username, message.chat.id))
                 connection_bd.commit()
             else:
                 cursor.execute(
                     "INSERT INTO users (NAME,GENDER,age,city,search_gender,photo_id,"
-                    "hobbies,target,description,ms_id,latitude,longitude,file_unique_id,us_url) "
+                    "hobbies,target,description,us_id,latitude,longitude,file_unique_id,us_url) "
                     "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,%s);",
                     (user.name, user.gender, user.age, user.city, user.search_gender, user.photo_id, user.hobbies,
                      user.target, user.description, message.chat.id, user.latitude, user.longitude, user.file_unique_id,
@@ -258,31 +271,49 @@ def end_registr(message):
             markup = types.ReplyKeyboardRemove(selective=False)
             bot.send_message(message.chat.id, "Окей \n Вы успешно зарегистрированы.", reply_markup=markup)
             print('Регистрация')
-            search_people(message,user_data[message.chat.id])
+            search_people(message, user_data[message.chat.id])
             user_data[message.chat.id] = None
-        except Exception:
-            bot.send_message(message.chat.id, 'Неизвестная ошибка')
+            return
+        except Exception as e:
+            bot.reply_to(message.chat.id, e)
             message.text = 'Регистрация'
             send_name(message)
     elif message.text == 'Нет':
         bot.send_message(message.chat.id, 'Попробуйте снова)')
         message.text = 'Регистрация'
         send_name(message)
+        return
     else:
         last_process(message)
+        return
 
 
 def search_people(message, user):
-    cursor.execute("SELECT * FROM users WHERE (gender = %s) and (age = %s) and (target = %s) and (city = %s)", (user.search_gender,
-                                                                                                                user.age, user.target, user.city))
+    cursor.execute("SELECT * FROM users WHERE (age = %s) and (target = %s)", (user.age, user.target))
     connection_bd.commit()
     result = cursor.fetchall()
-    markup = types.ReplyKeyboardMarkup(resize_keyboard='true')
+
+    bot.send_photo(message.chat.id, result[0][6],
+                   caption=f'{result[0][1]} {result[0][3]} - {result[0][4]} \n {result[0][9]}')
+    markup = types.ReplyKeyboardMarkup(resize_keyboard='true', row_width=4)
     like = types.KeyboardButton('❤')
     like_message = types.KeyboardButton('💌')
+    dislike = types.KeyboardButton('👎')
     menu = types.KeyboardButton('⚙')
-    markup.add(like, like_message, menu)
-    bot.send_message(message.chat.id, "Смотри   ", reply_markup=markup)
+    markup.add(like, like_message, dislike, menu)
+    bot.register_next_step_handler(message, event)
+
+
+def event(message):
+    if message.text == '❤' or message.text == '💌':
+        if message.text == '💌':
+            pass
+    elif message.text == '👎':
+        pass
+    elif message.text == '⚙':
+        pass
+    else:
+        bot.send_message(message.chat.id, 'Не понимаю Вас')
 
 
 bot.polling()

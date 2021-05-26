@@ -2,21 +2,23 @@ from geopy.geocoders import Nominatim
 from functools import partial
 
 
-class citysearch:
+class citySearch:
     def __init__(self, city=None, lon=None, lat=None):
-         if self.lat is None and self.lon is None:
-            self.city= city
+        try:
             geolocator = Nominatim(user_agent='my_request')
-            location = geolocator.geocode(self.city)
-            self.lon = location.longitude
-            self.lat = location.latitude
-         elif self.city is None:
-            self.lon = lon
-            self.lat = lat
-            geolocator = Nominatim(user_agent='my_request')
-            partial(geolocator.reverse, language="ru")
-            location = geolocator.reverse("45.0352566,38.9764814")
-            self.city = location.raw['address']['city']
+            if lat is None and lon is None:
+                self.city = city
+                location = geolocator.geocode(self.city)
+                self.lon = location.longitude
+                self.lat = location.latitude
+            elif city is None:
+                self.lon = lon
+                self.lat = lat
+                partial(geolocator.reverse, language="ru")
+                location = geolocator.reverse(f"{self.lat},{self.lon}")
+                self.city = location.raw['address']['city']
+        except Exception as e:
+            print(e)
 
 
 '''
@@ -24,8 +26,7 @@ if __name__ == '__main__':
 
     geolocator = Nominatim(user_agent="my_request")
 
-    reverse = partial(geolocator.reverse, language="ru")
-    location = geolocator.reverse("45.0352566,38.9764814")
-    city = location.raw['address']['city']
+    reverse = partial(geolocator.reverse, language="en")
+    location = geolocator.reverse("32.4027308, 48.4199982")
+    city = location.raw
     print(city)'''
-
