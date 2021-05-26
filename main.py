@@ -3,7 +3,6 @@ from telebot import types
 import config
 import psycopg2
 
-#dqawda
 class User:
     def __init__(self):
         self.name = ''
