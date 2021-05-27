@@ -92,9 +92,9 @@ def send_name(message):
         msg = bot.send_message(message.chat.id, "Как вас зовут? ", reply_markup=markup)
         bot.register_next_step_handler(msg, send_age)
     elif message.text.lower() == 'нет':
-        markup = types.ReplyKeyboardRemove(selective=False)
+        markup = types.ReplyKeyboardRemove(selective=False)#TODO **************************************************************************************************************
         bot.send_message(message.from_user.id, 'Просим прощения за беспокойство, приходите ещё)', reply_markup=markup)
-    '''elif message.text.lower() == 'показать мою анкету': #TODO **************************************************************************************************************
+    '''elif message.text.lower() == 'показать мою анкету': 
         user = user_data[message.chat.id]
         user.us_id = message.chat.id
         print(user.city, message.chat.id, user.photo_id)
@@ -106,7 +106,9 @@ def send_name(message):
         bot.send_message(message.chat.id, f'{user.photo_id}\
                         {user.name} {user.age} - {user.city} \n {user.description}')
         msg = bot.send_message(message.chat.id, 'Хотите что-либо изменить?', reply_markup=markup)
-        bot.register_next_step_handler(msg, send_name)''' #TODO **************************************************************************************************************
+        bot.register_next_step_handler(msg, show_me)''' #TODO **************************************************************************************************************
+
+#def show_me(message):
 
 
 
@@ -134,7 +136,7 @@ def send_city(message):
         # /////////
         user = user_data[message.chat.id]
         user.age = message.text
-        msg = bot.send_message(message.chat.id, "Введите город? \n<i>Для точности лучше отправьте геопозиция</i>",
+        msg = bot.send_message(message.chat.id, "Введите город\n<i>Для большей точности можете отправить гео-метку</i>",
                                parse_mode='html')
         bot.register_next_step_handler(msg, send_gender)
     except Exception as e:
