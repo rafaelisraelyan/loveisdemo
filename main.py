@@ -154,7 +154,7 @@ def send_gender(message):
     elif message.content_type == 'text':
         user = user_data[message.chat.id]
         city_search = citySearch(city=message.text)
-        if city_search.lon is None and city_search.lat:
+        if city_search.lon is None and city_search.lat is None:
             user = user_data[message.chat.id]
             message.text = user.age
             send_city(message)
