@@ -99,10 +99,9 @@ def send_name(message):
         msg = bot.send_message(message.chat.id, "Как вас зовут? ", reply_markup=markup)
         bot.register_next_step_handler(msg, send_age)
     elif message.text.lower() == 'нет':
-        markup = types.ReplyKeyboardRemove(
-            selective=False)  # TODO **************************************************************************************************************
+        markup = types.ReplyKeyboardRemove(selective=False)  # TODO *********************************
         bot.send_message(message.from_user.id, 'Просим прощения за беспокойство, приходите ещё)', reply_markup=markup)
-         # TODO **************************************************************************************************************
+         # TODO *************************************************
 
 
 # def show_me(message):
@@ -292,7 +291,7 @@ def end_registr(message):
             return
         except Exception as e:
             # bot.reply_to(e)
-            message.text = 'Регистрация'
+            message.text = f'Регистрация {e}'
             send_name(message)
             return
     elif message.text == 'Нет':
@@ -330,7 +329,7 @@ def event(message, res):
         bot.send_message(res[9], 'Вы кое-кому понравились)')
 
     elif message.text == '💌':
-        bot.register_next_step_handler()
+        bot.register_next_step_handler(message, like_and_mess)
     elif message.text == '👎':
         pass
     elif message.text == '⚙':
