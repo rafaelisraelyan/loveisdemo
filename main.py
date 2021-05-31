@@ -73,8 +73,15 @@ def hello(message):
         markup = types.ReplyKeyboardMarkup(selective=True, row_width=2, resize_keyboard='true')
         yes = types.KeyboardButton('Да')
         no = types.KeyboardButton('Нет')
-        show = types.KeyboardButton('Показать мою анкету')  # TODO Сделать вывод анкеты!!!
-        markup.add(yes, no, show)
+        markup.add(yes, no)
+        markup = types.ReplyKeyboardMarkup(selective=True, resize_keyboard=True, row_width=2)
+        yes = types.KeyboardButton('да')
+        no = types.KeyboardButton('нет')
+        markup.add(yes, no)
+        cursor.execute("SELECT * FROM loveis.public.users WHERE us_id = (%s)", [message.chat.id])
+        result = cursor.fetchall()
+        bot.send_photo(message.chat.id, result[0][5],
+                       caption=f'{result[0][0]} {result[0][2]} - {result[0][3]} \n {result[0][8]}')
         msq = bot.send_message(message.chat.id, 'Хотите обновить анкету?', reply_markup=markup)
         bot.register_next_step_handler(msq, send_name)
 
@@ -95,17 +102,7 @@ def send_name(message):
         markup = types.ReplyKeyboardRemove(
             selective=False)  # TODO **************************************************************************************************************
         bot.send_message(message.from_user.id, 'Просим прощения за беспокойство, приходите ещё)', reply_markup=markup)
-    elif message.text.lower() == 'показать мою анкету':
-        markup = types.ReplyKeyboardMarkup(selective=True, resize_keyboard=True, row_width=2)
-        yes = types.KeyboardButton('Изменить')
-        no = types.KeyboardButton('Оставить')
-        markup.add(yes, no)
-        cursor.execute("SELECT * FROM loveis.public.users WHERE us_id = (%s)", [message.chat.id])
-        result = cursor.fetchall()
-        bot.send_photo(message.chat.id, result[0][5],
-                       caption=f'{result[0][0]} {result[0][2]} - {result[0][3]} \n {result[0][8]}', reply_markup=markup)
-        msg = bot.send_message(message.chat.id, 'Хотите что-либо изменить?', reply_markup=markup)
-        bot.register_next_step_handler(msg, show_me)  # TODO **************************************************************************************************************
+         # TODO **************************************************************************************************************
 
 
 # def show_me(message):
@@ -330,26 +327,35 @@ def event(message, res):
     if message.text == '❤' or message.text == '💌':
         cursor.execute("INSERT INTO likes(your_id, us_id) values (%s,%s)", (res[9], message.chat.id))
         connection_bd.commit()
-
-        cursor.execute("SELECT * FROM loveis.public.users WHERE us_id = (%s)", [message.chat.id])
-        result = cursor.fetchall()
-        markup = types.ReplyKeyboardMarkup(resize_keyboard='true', row_width=4)
-        like = types.KeyboardButton('❤')
-        dislike = types.KeyboardButton('👎')
-        markup.add(like, dislike)
         bot.send_message(res[9], 'Вы кое-кому понравились)')
-        bot.send_photo(res[9], result[0][5],
-                       caption=f'{result[0][0]} {result[0][2]} - {result[0][3]} \n {result[0][8]}', reply_markup=markup)
 
-        bot.register_next_step_handler(message, like_or_not, res)
     elif message.text == '💌':
-        pass
+        bot.register_next_step_handler()
     elif message.text == '👎':
         pass
     elif message.text == '⚙':
-        pass
+        cursor.execute("SELECT * FROM loveis.public.users WHERE us_id = (%s)", [message.chat.id])
+        result = cursor.fetchall()
+        if len(result) != 0:
+            markup = types.ReplyKeyboardMarkup(resize_keyboard='true', row_width=4)
+            like = types.KeyboardButton('❤')
+            dislike = types.KeyboardButton('👎')
+            markup.add(like, dislike)
+
+            bot.send_photo(res[9], result[0][5],
+                           caption=f'{result[0][0]} {result[0][2]} - {result[0][3]} \n {result[0][8]}',
+                           reply_markup=markup)
+
+            bot.register_next_step_handler(message, like_or_not, res)
     else:
         bot.send_message(message.chat.id, 'Не понимаю Вас')
+
+
+def like_and_mess(message, res):
+    if message.type == 'text':
+        cursor.execute("INSERT INTO likes(your_id, us_id,message) values (%s,%s)", (res[9], message.chat.id, message.text))
+        connection_bd.commit()
+        bot.send_message(res[9], 'Вы кое-кому понравились)')
 
 
 def like_or_not(message, res):
