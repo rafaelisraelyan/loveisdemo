@@ -95,19 +95,17 @@ def send_name(message):
         markup = types.ReplyKeyboardRemove(
             selective=False)  # TODO **************************************************************************************************************
         bot.send_message(message.from_user.id, 'Просим прощения за беспокойство, приходите ещё)', reply_markup=markup)
-    '''elif message.text.lower() == 'показать мою анкету': 
-        user = user_data[message.chat.id]
-        user.us_id = message.chat.id
-        print(user.city, message.chat.id, user.photo_id)
+    elif message.text.lower() == 'показать мою анкету':
         markup = types.ReplyKeyboardMarkup(selective=True, resize_keyboard=True, row_width=2)
         yes = types.KeyboardButton('Изменить')
         no = types.KeyboardButton('Оставить')
         markup.add(yes, no)
-        ("SELECT * FROM users WHERE us_id = 'message.chat.id'")
-        bot.send_message(message.chat.id, f'{user.photo_id}\
-                        {user.name} {user.age} - {user.city} \n {user.description}')
+        cursor.execute("SELECT * FROM loveis.public.users WHERE us_id = (%s)", [message.chat.id])
+        result = cursor.fetchall()
+        bot.send_photo(message.chat.id, result[0][5],
+                       caption=f'{result[0][0]} {result[0][2]} - {result[0][3]} \n {result[0][8]}', reply_markup=markup)
         msg = bot.send_message(message.chat.id, 'Хотите что-либо изменить?', reply_markup=markup)
-        bot.register_next_step_handler(msg, show_me)'''  # TODO **************************************************************************************************************
+        bot.register_next_step_handler(msg, show_me)  # TODO **************************************************************************************************************
 
 
 # def show_me(message):
