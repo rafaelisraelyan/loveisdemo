@@ -283,7 +283,12 @@ def end_registr(message):
                      user.target, user.description, message.chat.id, user.latitude, user.longitude, user.file_unique_id,
                      message.chat.username))
                 connection_bd.commit()
-            markup = types.ReplyKeyboardRemove(selective=False)
+            markup = types.ReplyKeyboardMarkup(resize_keyboard='true', row_width=4)
+            like = types.KeyboardButton('❤')
+            like_message = types.KeyboardButton('💌')
+            dislike = types.KeyboardButton('👎')
+            menu = types.KeyboardButton('⚙')
+            markup.add(like, like_message, dislike, menu)
             bot.send_message(message.chat.id, "Окей \n Вы успешно зарегистрированы.", reply_markup=markup)
             print('Регистрация')
             search_people(message, user_data[message.chat.id])
@@ -311,14 +316,8 @@ def search_people(message, user):
     result = cursor.fetchall()
 
     us = result[0]
-    markup = types.ReplyKeyboardMarkup(resize_keyboard='true', row_width=4)
-    like = types.KeyboardButton('❤')
-    like_message = types.KeyboardButton('💌')
-    dislike = types.KeyboardButton('👎')
-    menu = types.KeyboardButton('⚙')
-    markup.add(like, like_message, dislike, menu)
     bot.send_photo(message.chat.id, us[5],
-                   caption=f'{us[0]} {us[2]} - {us[3]} \n {us[8]}', reply_markup=markup)
+                   caption=f'{us[0]} {us[2]} - {us[3]} \n {us[8]}')
     bot.register_next_step_handler(message, event, us)
 
 
@@ -333,9 +332,11 @@ def event(message, res):
     elif message.text == '👎':
         pass
     elif message.text == '⚙':
-        cursor.execute("SELECT * FROM loveis.public.users WHERE us_id = (%s)", [message.chat.id])
-        result = cursor.fetchall()
-        if len(result) != 0:
+        cursor.execute("SELECT * FROM loveis.public.likes WHERE your_id = %s ", [message.chat.id])
+        likes = cursor.fetchall()
+        if len(likes) != 0:
+            cursor.execute("SELECT * FROM loveis.public.users WHERE us_id = (%s)", likes[0][1])
+            result = cursor.fetchall()
             markup = types.ReplyKeyboardMarkup(resize_keyboard='true', row_width=4)
             like = types.KeyboardButton('❤')
             dislike = types.KeyboardButton('👎')
